@@ -1,7 +1,7 @@
-import { Component, ViewChild, ViewContainerRef } from "@angular/core";
+import { Component, OnDestroy, ViewChild, ViewContainerRef } from "@angular/core";
 import { NgForm } from "@angular/forms";
 import { AuthResponseData, AuthService } from "./auth.service";
-import { Observable } from "rxjs";
+import { Observable, Subscription } from "rxjs";
 import { Router } from "@angular/router";
 import { AlertComponent } from "../shared/alert/alert.component";
 import { PlaceHolderDirective } from "../shared/placeHolder/placeHolder.directive";
@@ -10,11 +10,13 @@ import { PlaceHolderDirective } from "../shared/placeHolder/placeHolder.directiv
     selector: 'app-auth',
     templateUrl: './auth.component.html'
 })
-export class AuthComponent {
+export class AuthComponent implements OnDestroy {
     isLoginMode = true;
     isLoading = false;
     error: string = null;
     @ViewChild(PlaceHolderDirective, {static: false}) alertHost: PlaceHolderDirective;
+
+    private closeSub: Subscription;
 
     constructor(
         private authService: AuthService,
@@ -50,6 +52,7 @@ export class AuthComponent {
             errorMessage => {
                 console.log(errorMessage);
                 this.error = errorMessage;
+                this.showErrorAlert(errorMessage);
                 this.isLoading = false;
             }
         )
@@ -61,10 +64,22 @@ export class AuthComponent {
         this.error = null;
     }
 
-    private showErrorAlert(message:string) {
+    ngOnDestroy(): void {
+        if (this.closeSub) {
+            this.closeSub.unsubscribe();
+        }
+    }
+
+    private showErrorAlert(message: string) {
         const hostViewContainerRef = this.alertHost.viewContainerRef;
         hostViewContainerRef.clear();
-        
-        hostViewContainerRef.createComponent<AlertComponent>(AlertComponent);
+
+        const componentRef = hostViewContainerRef.createComponent<AlertComponent>(AlertComponent);
+
+        componentRef.instance.message = message;
+        this.closeSub = componentRef.instance.close.subscribe(() => {
+            this.closeSub.unsubscribe();
+            hostViewContainerRef.clear();
+        });
     }
 }
