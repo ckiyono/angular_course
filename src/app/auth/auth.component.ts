@@ -1,8 +1,9 @@
-import { Component } from "@angular/core";
+import { Component, ViewContainerRef } from "@angular/core";
 import { NgForm } from "@angular/forms";
 import { AuthResponseData, AuthService } from "./auth.service";
 import { Observable } from "rxjs";
 import { Router } from "@angular/router";
+import { AlertComponent } from "../shared/alert/alert.component";
 
 @Component({
     selector: 'app-auth',
@@ -16,6 +17,7 @@ export class AuthComponent {
     constructor(
         private authService: AuthService,
         private router: Router,
+        private hostViewContainerRef: ViewContainerRef,
     ) {}
 
     onSwitchMode() {
@@ -56,5 +58,10 @@ export class AuthComponent {
 
     onHandleError() {
         this.error = null;
+    }
+
+    private showErrorAlert(message:string) {
+        const alertComp = this.hostViewContainerRef.createComponent<AlertComponent>(AlertComponent);
+        
     }
 }
